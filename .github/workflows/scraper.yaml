@@ -1,0 +1,29 @@
+name: Flight Scraper
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"   # toutes les 3 heures
+  workflow_dispatch:        # permet de lancer à la main
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Run scraper
+        run: |
+          python run_scraper.py
