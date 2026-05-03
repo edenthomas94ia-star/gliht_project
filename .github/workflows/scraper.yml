@@ -1,7 +1,6 @@
 name: Flight Scraper
 
 on:
-  push:
   schedule:
     - cron: "0 */3 * * *"   # toutes les 3 heures
   workflow_dispatch:        # permet de lancer à la main
