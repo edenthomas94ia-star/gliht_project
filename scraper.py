@@ -1,5 +1,6 @@
 import re
 from playwright.sync_api import sync_playwright
+import os
 
 
 # ----------------------------
@@ -81,7 +82,10 @@ def extract_airline(text: str):
 # ----------------------------
 def scrape_page(url):
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        
+        HEADLESS = os.getenv("GITHUB_ACTIONS") == "true"
+
+        browser = p.chromium.launch(headless=HEADLESS)
         context = browser.new_context()  # 👈 équivalent incognito
         page = context.new_page()
 
