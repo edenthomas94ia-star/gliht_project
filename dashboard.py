@@ -1,77 +1,33 @@
 import streamlit as st
 import pandas as pd
-from database import init_db, get_offers
-from scraper import scrape_kayak
-
-init_db()
+from storage_json import load_flights
 
 st.title("Flight Price Intelligence System")
 
-st.sidebar.header("Search")
+data = load_flights()
 
-origin = st.sidebar.text_input("Departure airport/city code", "PAR")
-destination = st.sidebar.text_input("Destination airport/city code", "TCI")
-
-departure_date = st.sidebar.date_input("Departure date")
-return_date = st.sidebar.date_input("Return date")
-
-if st.sidebar.button("Scrape flights"):
-    result = scrape_kayak(
-        origin=origin.upper(),
-        destination=destination.upper(),
-        departure_date=str(departure_date),
-        return_date=str(return_date)
-    )
-
-    st.success(f"{result['count']} offers collected")
-    st.write(result)
-
-data = get_offers()
-
-rows = [
-    {
-        "origin": x.origin,
-        "destination": x.destination,
-        "departure_date": x.departure_date,
-        "return_date": x.return_date,
-        "price": x.price,
-        "currency": x.currency,
-        "airline": x.airline,
-        "duration": x.duration,
-        "stops": x.stops,
-        "departure_time": x.departure_time,
-        "arrival_time": x.arrival_time,
-        "source": x.source,
-        "collected_at": x.collected_at,
-    }
-    for x in data
-]
-
-df = pd.DataFrame(rows)
-
-if df.empty:
-    st.info("No flights collected yet.")
+if not data:
+    st.info("No flight data yet.")
 else:
+    df = pd.DataFrame(data)
+
     st.subheader("Collected flight offers")
-
-    df["collected_at"] = pd.to_datetime(df["collected_at"])
     df = df.sort_values("price")
-
     st.dataframe(df)
 
     st.subheader("Best offer")
     best = df.iloc[0]
-
     st.metric("Best price", f"{best['price']} €")
 
     st.write({
-        "airline": best["airline"],
-        "duration": best["duration"],
-        "stops": best["stops"],
-        "departure_time": best["departure_time"],
-        "arrival_time": best["arrival_time"],
+        "airline": best.get("airline"),
+        "duration": best.get("duration"),
+        "stops": best.get("stops"),
+        "departure_time": best.get("departure_time"),
+        "arrival_time": best.get("arrival_time"),
+        "collected_at": best.get("collected_at"),
     })
 
     st.subheader("Price history")
-    history = df.sort_values("collected_at")
-    st.line_chart(history, x="collected_at", y="price")
+    df["collected_at"] = pd.to_datetime(df["collected_at"])
+    st.line_chart(df.sort_values("collected_at"), x="collected_at", y="price")
